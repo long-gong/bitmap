@@ -1,0 +1,5 @@
+.idea
+cmake-*
+
+/bitmap_test
+/*.o
