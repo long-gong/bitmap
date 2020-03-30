@@ -5,6 +5,9 @@
 #include <limits>
 /**
  * \brief Short-Length BitMap (can fit in a single CPU word)
+ *
+ * NOTICE: It is just a special case of the std::bitset
+ *
  */
 class BitMap {
 public:
@@ -12,45 +15,73 @@ public:
   static const unsigned npos = -1;
   explicit BitMap(unsigned len, uint64_t value = 0);
 
+  // length or size of this bitmap
   unsigned size() const { return _len; };
+
+  // find the first set bit
   unsigned ffs() const;
 
+  // flip the entire bitmap
   BitMap &flip() noexcept;
+
+  // flip only the (pos)-th bit in the bitmap
+  // NOTICE: Users should make sure that pos is less than the length of this
+  // bitmap.
   BitMap &flip(unsigned pos);
 
+  // set to all-1
   BitMap &set() noexcept;
+
+  // set the (pos)-th bit to value
   BitMap &set(unsigned pos, bool value = true);
 
+  // reset the entire bitmap to all-0
   BitMap &reset() noexcept;
+
+  // reset the (pos)-th bit
   BitMap &reset(unsigned pos);
 
+  // convert to an uint64 number
   uint64_t to_uint64() const { return _data; }
 
-  // operators
+  /* operators */
+
+  // (read-only) access the (pos)-th bit
   bool operator[](unsigned pos) const;
+
+  // (read-write) access the (pos)-th bit
   reference operator[](unsigned pos);
 
+  // flip the entire bitmap
   BitMap &operator~() { return flip(); }
 
+  // bitwise-XOR with another bitmap
   BitMap &operator^=(const BitMap &other) {
     _data ^= other.to_uint64();
     return *this;
   }
 
+  // bitwise-AND with another bitmap
   BitMap &operator&=(const BitMap &other) {
     _data &= other.to_uint64();
     return *this;
   }
 
+  // bitwise-OR with another bitmap
   BitMap &operator|=(const BitMap &other) {
     _data |= other.to_uint64();
     return *this;
   }
 
-  // friend binary operators
+  /* friend binary operators */
+
+  // bitwise-XOR
   friend inline BitMap operator^(const BitMap &lhs, const BitMap &rhs);
+  // bitwise-AND
   friend inline BitMap operator&(const BitMap &lhs, const BitMap &rhs);
+  // bitwise-OR
   friend inline BitMap operator|(const BitMap &lhs, const BitMap &rhs);
+  // equal
   friend inline bool operator==(const BitMap &lhs, const BitMap &rhs);
 
   // copied from http://www.cplusplus.com/reference/bitset/bitset/reference/
@@ -74,6 +105,8 @@ private:
   unsigned _len;
   uint64_t _data;
 };
+
+/* Implementations */
 
 BitMap::BitMap(unsigned len, uint64_t value) : _len(len), _data(value) {}
 
