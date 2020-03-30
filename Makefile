@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -O0 -Wall  
+CXXFLAGS = -g -O0 -Wall -std=c++11
 LDFLAGS = -lpthread -lgtest_main -lgtest 
 RM = gio trash -f
 

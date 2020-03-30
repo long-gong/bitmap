@@ -12,7 +12,6 @@
 class BitMap {
 public:
   class reference;
-  static const unsigned npos = -1;
   explicit BitMap(unsigned len, uint64_t value = 0);
 
   // length or size of this bitmap
@@ -47,7 +46,9 @@ public:
   /* operators */
 
   // (read-only) access the (pos)-th bit
-  bool operator[](unsigned pos) const;
+  constexpr bool operator[](unsigned pos) const {
+    return ((_data & BitMap::_maskbit(pos)) != 0ull);
+  }
 
   // (read-write) access the (pos)-th bit
   reference operator[](unsigned pos);
@@ -92,8 +93,7 @@ public:
     reference(BitMap &b, unsigned pos) noexcept; // no public constructor
   public:
     ~reference() = default;
-    ;
-    explicit operator bool() const noexcept;           // convert to bool
+    operator bool() const noexcept;                    // convert to bool
     reference &operator=(bool x) noexcept;             // assign bool
     reference &operator=(const reference &x) noexcept; // assign bit
     reference &flip() noexcept;                        // flip bit value
@@ -101,7 +101,9 @@ public:
   };
 
 private:
-  static uint64_t _maskbit(unsigned pos) noexcept { return (1ull << pos); }
+  static constexpr uint64_t _maskbit(unsigned pos) noexcept {
+    return (1ull << pos);
+  }
   unsigned _len;
   uint64_t _data;
 };
@@ -112,14 +114,14 @@ BitMap::BitMap(unsigned len, uint64_t value) : _len(len), _data(value) {}
 
 unsigned BitMap::ffs() const {
 #if defined(__GNUC__)
-  return __builtin_clzl(_data);
+  if (_data == 0ull) return _len;
+  return __builtin_ctzl(_data);
 #else
-  if (_data == 0)
-    return BitMap::npos;
   for (unsigned i = 0; i < _len; ++i) {
     if (_data & BitMap::_maskbit(i))
       return i;
   }
+  return _len;
 #endif
 }
 
@@ -127,8 +129,18 @@ BitMap &BitMap::flip() noexcept {
   _data = ~_data;
   return *this;
 }
+
 BitMap &BitMap::flip(unsigned pos) {
   _data ^= BitMap::_maskbit(pos);
+  return *this;
+}
+
+BitMap &BitMap::set() noexcept {
+  if (_len == 64)
+    _data = std::numeric_limits<uint64_t>::max();
+  else
+    _data = (1ull << _len) - 1ull;
+
   return *this;
 }
 
@@ -140,16 +152,20 @@ BitMap &BitMap::set(unsigned pos, bool value) {
 
   return *this;
 }
+
 BitMap &BitMap::reset() noexcept {
   _data = 0ull;
   return *this;
 }
+
 BitMap &BitMap::reset(unsigned pos) { return set(pos, false); }
-bool BitMap::operator[](unsigned pos) const {
-  return (_data & BitMap::_maskbit(pos)) != 0;
-}
+
+// constexpr bool BitMap::operator[](unsigned pos) const {
+//   return ((_data & BitMap::_maskbit(pos)) != 0ull);
+// }
+
 BitMap::reference BitMap::operator[](unsigned pos) {
-  return reference{*this, pos};
+  return reference(*this, pos);
 }
 
 BitMap::reference::reference(BitMap &b, unsigned pos) noexcept
@@ -159,6 +175,7 @@ BitMap::reference::operator bool() const noexcept {
   auto bit_val = ((*_data_ptr) >> _pos) & 1ull;
   return (bit_val != 0ull);
 }
+
 BitMap::reference &BitMap::reference::operator=(bool x) noexcept {
   if (x)
     *_data_ptr |= BitMap::_maskbit(_pos);
@@ -182,6 +199,7 @@ BitMap::reference &BitMap::reference::flip() noexcept {
   *_data_ptr ^= BitMap::_maskbit(_pos);
   return *this;
 }
+
 bool BitMap::reference::operator~() const noexcept {
   return ((*_data_ptr & BitMap::_maskbit(_pos)) == 0);
 }
@@ -201,14 +219,6 @@ inline BitMap operator|(const BitMap &lhs, const BitMap &rhs) {
 
 inline bool operator==(const BitMap &lhs, const BitMap &rhs) {
   return lhs.size() == rhs.size() && lhs.to_uint64() == rhs.to_uint64();
-}
-BitMap &BitMap::set() noexcept {
-  if (_len == 64)
-    _data = std::numeric_limits<uint64_t>::max();
-  else
-    _data = (1ull << _len) - 1ull;
-
-  return *this;
 }
 
 #endif // BITMAP__BITMAP_H_
