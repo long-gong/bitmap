@@ -1,6 +1,9 @@
 #ifndef BITMAP__BITMAP_H_
 #define BITMAP__BITMAP_H_
 
+// Reference:
+// https://github.com/gcc-mirror/gcc/blob/master/libstdc%2B%2B-v3/include/std/bitset
+
 #include <cstdint>
 #include <limits>
 /**

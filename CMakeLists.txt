@@ -3,4 +3,5 @@ project(bitmap)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(bitmap main.cpp bitmap.h)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+add_executable(bitmap ffa.h bitmap_test.cpp base_allocate.h mfa.h mwfa.h)
