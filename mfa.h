@@ -17,9 +17,11 @@ struct mfa : base_allocate {
     const unsigned np = proposals.size();
     constexpr unsigned UNMATCHED = -1;
 
+    auto &bo = right->at(j);
     std::vector<unsigned int> allocation(batch_size, UNMATCHED);
 
-    auto &bo = right->at(j);
+    if (bo.to_uint64() == 0ull)
+      return allocation;
 
     const size_t n_vertices = batch_size + np;
     uw_graph g(n_vertices);
@@ -39,7 +41,7 @@ struct mfa : base_allocate {
     edmonds_maximum_cardinality_matching(g, &mate[0]);
 
     for (unsigned k = 0; k < batch_size; ++k) {
-      if (mate[k] >= batch_size && mate[k] < n_vertices) {
+      if (mate[k] >= (int)batch_size && mate[k] < (int)n_vertices) {
         allocation[k] = proposals.at(mate[k] - batch_size);
       }
     }

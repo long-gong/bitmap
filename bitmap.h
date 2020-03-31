@@ -6,6 +6,8 @@
 
 #include <cstdint>
 #include <limits>
+#include <string>
+
 /**
  * \brief Short-Length BitMap (can fit in a single CPU word)
  *
@@ -43,8 +45,15 @@ public:
   // reset the (pos)-th bit
   BitMap &reset(unsigned pos);
 
+  bool test(unsigned pos) const {
+    return ((_data & BitMap::_maskbit(pos)) != 0ull);
+  }
+
   // convert to an uint64 number
   uint64_t to_uint64() const { return _data; }
+
+  // convert to string
+  std::string to_string() const;
 
   /* operators */
 
@@ -117,7 +126,8 @@ BitMap::BitMap(unsigned len, uint64_t value) : _len(len), _data(value) {}
 
 unsigned BitMap::ffs() const {
 #if defined(__GNUC__)
-  if (_data == 0ull) return _len;
+  if (_data == 0ull)
+    return _len;
   return __builtin_ctzl(_data);
 #else
   for (unsigned i = 0; i < _len; ++i) {
@@ -162,6 +172,13 @@ BitMap &BitMap::reset() noexcept {
 }
 
 BitMap &BitMap::reset(unsigned pos) { return set(pos, false); }
+
+std::string BitMap::to_string() const {
+  std::string s(_len, '0');
+  for (unsigned i = _len; i > 0; --i)
+    s[i - 1] = (test(i - 1) ? '1' : '0');
+  return s;
+}
 
 // constexpr bool BitMap::operator[](unsigned pos) const {
 //   return ((_data & BitMap::_maskbit(pos)) != 0ull);
@@ -222,6 +239,12 @@ inline BitMap operator|(const BitMap &lhs, const BitMap &rhs) {
 
 inline bool operator==(const BitMap &lhs, const BitMap &rhs) {
   return lhs.size() == rhs.size() && lhs.to_uint64() == rhs.to_uint64();
+}
+
+inline std::ostream &operator<<(std::ostream &os, const BitMap &obj) {
+  // write obj to stream
+  os << obj.to_string();
+  return os;
 }
 
 #endif // BITMAP__BITMAP_H_

@@ -3,4 +3,5 @@ cmake-*
 
 /bitmap_test
 /weighted_matching_example
+/tsa_example
 /*.o

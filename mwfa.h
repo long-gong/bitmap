@@ -27,9 +27,10 @@ struct mwfa : base_allocate {
     const unsigned np = proposals.size();
     constexpr unsigned UNMATCHED = -1;
 
-    std::vector<unsigned int> allocation(batch_size, UNMATCHED);
-
     auto &bo = right->at(j);
+    std::vector<unsigned int> allocation(batch_size, UNMATCHED);
+    if (bo.to_uint64() == 0ull)
+      return allocation;
 
     const size_t n_vertices = batch_size + np;
     w_graph g(n_vertices);
@@ -49,7 +50,7 @@ struct mwfa : base_allocate {
     maximum_weighted_matching(g, &mate[0]);
 
     for (unsigned k = 0; k < batch_size; ++k) {
-      if (mate[k] >= batch_size && mate[k] < n_vertices) {
+      if (mate[k] >= (int)batch_size && mate[k] < (int)n_vertices) {
         allocation[k] = proposals.at(mate[k] - batch_size);
       }
     }
